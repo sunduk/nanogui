@@ -1,4 +1,4 @@
-/*
+ï»¿/*
     src/example1.cpp -- C++ version of an example application that shows
     how to use the various widget classes. For a Python implementation, see
     '../python/example1.py'.
@@ -198,7 +198,7 @@ public:
 
         /* No need to store a pointer, the data structure will be automatically
            freed when the parent window is deleted */
-        new Label(window, MultiByteToUtf8("ÇÑ±¹¾îñéÏÐåÞEnglish"), "NanumGothic-bold");
+        new Label(window, MultiByteToUtf8("í•œêµ­ì–´ä¸­åœ‹èªžEnglish"), "NanumGothic-bold");
 
         Button *b = new Button(window, "Plain button");
         b->setCallback([] { cout << "pushed!" << endl; });
