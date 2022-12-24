@@ -219,8 +219,8 @@ public:
         if (TextBox::mouseDragEvent(p, rel, button, modifiers)) {
             return true;
         }
-        if (mSpinnable && !focused() && button == 2 /* 1 << GLFW_MOUSE_BUTTON_2 */ && mMouseDownPos.x() != -1) {
-                int valueDelta = static_cast<int>((p.x() - mMouseDownPos.x()) / float(10));
+        if (mSpinnable && !focused() && button == 2 /* 1 << GLFW_MOUSE_BUTTON_2 */ && mMouseDownPos.x != -1) {
+                int valueDelta = static_cast<int>((p.x - mMouseDownPos.x) / float(10));
                 setValue(mMouseDownValue + valueDelta * mValueIncrement);
                 if (mCallback)
                     mCallback(mValue);
@@ -233,7 +233,7 @@ public:
             return true;
         }
         if (mSpinnable && !focused()) {
-              int valueDelta = (rel.y() > 0) ? 1 : -1;
+              int valueDelta = (rel.y > 0) ? 1 : -1;
               setValue(value() + valueDelta*mValueIncrement);
               if (mCallback)
                   mCallback(mValue);
@@ -331,8 +331,8 @@ public:
         if (TextBox::mouseDragEvent(p, rel, button, modifiers)) {
             return true;
         }
-        if (mSpinnable && !focused() && button == 2 /* 1 << GLFW_MOUSE_BUTTON_2 */ && mMouseDownPos.x() != -1) {
-            int valueDelta = static_cast<int>((p.x() - mMouseDownPos.x()) / float(10));
+        if (mSpinnable && !focused() && button == 2 /* 1 << GLFW_MOUSE_BUTTON_2 */ && mMouseDownPos.x != -1) {
+            int valueDelta = static_cast<int>((p.x - mMouseDownPos.x) / float(10));
             setValue(mMouseDownValue + valueDelta * mValueIncrement);
             if (mCallback)
                 mCallback(mValue);
@@ -345,7 +345,7 @@ public:
             return true;
         }
         if (mSpinnable && !focused()) {
-            int valueDelta = (rel.y() > 0) ? 1 : -1;
+            int valueDelta = (rel.y > 0) ? 1 : -1;
             setValue(value() + valueDelta*mValueIncrement);
             if (mCallback)
                 mCallback(mValue);

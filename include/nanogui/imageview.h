@@ -34,13 +34,13 @@ public:
 
     GLShader& imageShader() { return mShader; }
 
-    Vector2f positionF() const { return mPos.cast<float>(); }
-    Vector2f sizeF() const { return mSize.cast<float>(); }
+    Vector2f positionF() const { return mPos; }
+    Vector2f sizeF() const { return mSize; }
 
     const Vector2i& imageSize() const { return mImageSize; }
-    Vector2i scaledImageSize() const { return (mScale * mImageSize.cast<float>()).cast<int>(); }
-    Vector2f imageSizeF() const { return mImageSize.cast<float>(); }
-    Vector2f scaledImageSizeF() const { return (mScale * mImageSize.cast<float>()); }
+    Vector2i scaledImageSize() const { return (mScale * (Vector2f)mImageSize); }
+    Vector2f imageSizeF() const { return mImageSize; }
+    Vector2f scaledImageSizeF() const { return (mScale * (Vector2f)mImageSize); }
 
     const Vector2f& offset() const { return mOffset; }
     void setOffset(const Vector2f& offset) { mOffset = offset; }

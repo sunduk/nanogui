@@ -33,16 +33,16 @@ int StackedWidget::selectedIndex() const {
 
 void StackedWidget::performLayout(NVGcontext *ctx) {
     for (auto child : mChildren) {
-        child->setPosition(Vector2i::Zero());
+        child->setPosition(Vector2i(0));
         child->setSize(mSize);
         child->performLayout(ctx);
     }
 }
 
 Vector2i StackedWidget::preferredSize(NVGcontext *ctx) const {
-    Vector2i size = Vector2i::Zero();
+    Vector2i size = Vector2i(0);
     for (auto child : mChildren)
-        size = size.cwiseMax(child->preferredSize(ctx));
+        size = cwiseMax(size, child->preferredSize(ctx));
     return size;
 }
 

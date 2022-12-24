@@ -348,17 +348,17 @@ void GLFramebuffer::init(const Vector2i &size, int nSamples) {
     glBindRenderbuffer(GL_RENDERBUFFER, mColor);
 
     if (nSamples <= 1)
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, size.x(), size.y());
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_RGBA8, size.x, size.y);
     else
-        glRenderbufferStorageMultisample(GL_RENDERBUFFER, nSamples, GL_RGBA8, size.x(), size.y());
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, nSamples, GL_RGBA8, size.x, size.y);
 
     glGenRenderbuffers(1, &mDepth);
     glBindRenderbuffer(GL_RENDERBUFFER, mDepth);
 
     if (nSamples <= 1)
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, size.x(), size.y());
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, size.x, size.y);
     else
-        glRenderbufferStorageMultisample(GL_RENDERBUFFER, nSamples, GL_DEPTH24_STENCIL8, size.x(), size.y());
+        glRenderbufferStorageMultisample(GL_RENDERBUFFER, nSamples, GL_DEPTH24_STENCIL8, size.x, size.y);
 
     glGenFramebuffers(1, &mFramebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, mFramebuffer);
@@ -400,27 +400,27 @@ void GLFramebuffer::blit() {
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
     glDrawBuffer(GL_BACK);
 
-    glBlitFramebuffer(0, 0, mSize.x(), mSize.y(), 0, 0, mSize.x(), mSize.y(),
+    glBlitFramebuffer(0, 0, mSize.x, mSize.y, 0, 0, mSize.x, mSize.y,
                       GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void GLFramebuffer::downloadTGA(const std::string &filename) {
-    uint8_t *temp = new uint8_t[mSize.prod() * 4];
+    uint8_t *temp = new uint8_t[glm::compMul(mSize) * 4];
 
-    std::cout << "Writing \"" << filename  << "\" (" << mSize.x() << "x" << mSize.y() << ") .. ";
+    std::cout << "Writing \"" << filename  << "\" (" << mSize.x << "x" << mSize.y << ") .. ";
     std::cout.flush();
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, mFramebuffer);
     glBindBuffer(GL_PIXEL_PACK_BUFFER, 0);
-    glReadPixels(0, 0, mSize.x(), mSize.y(), GL_BGRA, GL_UNSIGNED_BYTE, temp);
+    glReadPixels(0, 0, mSize.x, mSize.y, GL_BGRA, GL_UNSIGNED_BYTE, temp);
     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 
-    uint32_t rowSize = mSize.x() * 4;
-    uint32_t halfHeight = mSize.y() / 2;
+    uint32_t rowSize = mSize.x * 4;
+    uint32_t halfHeight = mSize.y / 2;
     uint8_t *line = (uint8_t *) alloca(rowSize);
-    for (uint32_t i=0, j=mSize.y()-1; i<halfHeight; ++i) {
+    for (uint32_t i=0, j=mSize.y-1; i<halfHeight; ++i) {
         memcpy(line, temp + i * rowSize, rowSize);
         memcpy(temp + i * rowSize, temp + j * rowSize, rowSize);
         memcpy(temp + j * rowSize, line, rowSize);
@@ -438,13 +438,13 @@ void GLFramebuffer::downloadTGA(const std::string &filename) {
     fputc(0, tga); /* Color map entry size (unused) */
     fputc(0, tga); fputc(0, tga);  /* X offset */
     fputc(0, tga); fputc(0, tga);  /* Y offset */
-    fputc(mSize.x() % 256, tga); /* Width */
-    fputc(mSize.x() / 256, tga); /* continued */
-    fputc(mSize.y() % 256, tga); /* Height */
-    fputc(mSize.y() / 256, tga); /* continued */
+    fputc(mSize.x % 256, tga); /* Width */
+    fputc(mSize.x / 256, tga); /* continued */
+    fputc(mSize.y % 256, tga); /* Height */
+    fputc(mSize.y / 256, tga); /* continued */
     fputc(32, tga);   /* Bits per pixel */
     fputc(0x20, tga); /* Scan from top left */
-    fwrite(temp, mSize.prod() * 4, 1, tga);
+    fwrite(temp, glm::compMul(mSize) * 4, 1, tga);
     fclose(tga);
 
     delete[] temp;
@@ -466,8 +466,8 @@ Eigen::Vector3f project(const Eigen::Vector3f &obj,
 
     tmp = tmp.array() / tmp(3);
     tmp = tmp.array() * 0.5f + 0.5f;
-    tmp(0) = tmp(0) * viewportSize.x();
-    tmp(1) = tmp(1) * viewportSize.y();
+    tmp(0) = tmp(0) * viewportSize.x;
+    tmp(1) = tmp(1) * viewportSize.y;
 
     return tmp.head(3);
 }
@@ -480,8 +480,8 @@ Eigen::Vector3f unproject(const Eigen::Vector3f &win,
 
     Eigen::Vector4f tmp;
     tmp << win, 1;
-    tmp(0) = tmp(0) / viewportSize.x();
-    tmp(1) = tmp(1) / viewportSize.y();
+    tmp(0) = tmp(0) / viewportSize.x;
+    tmp(1) = tmp(1) / viewportSize.y;
     tmp = tmp.array() * 2.0f - 1.0f;
 
     Eigen::Vector4f obj = Inverse * tmp;
@@ -513,29 +513,29 @@ Eigen::Matrix4f lookAt(const Eigen::Vector3f &origin,
     return result;
 }
 
-Eigen::Matrix4f ortho(float left, float right, float bottom,
+Matrix4f ortho(float left, float right, float bottom,
                       float top, float nearVal, float farVal) {
-    Eigen::Matrix4f result = Eigen::Matrix4f::Identity();
-    result(0, 0) = 2.0f / (right - left);
-    result(1, 1) = 2.0f / (top - bottom);
-    result(2, 2) = -2.0f / (farVal - nearVal);
-    result(0, 3) = -(right + left) / (right - left);
-    result(1, 3) = -(top + bottom) / (top - bottom);
-    result(2, 3) = -(farVal + nearVal) / (farVal - nearVal);
+    Matrix4f result = glm::identity<Matrix4f>();
+    result[0][0] = 2.0f / (right - left);
+    result[1][1] = 2.0f / (top - bottom);
+    result[2][2] = -2.0f / (farVal - nearVal);
+    result[0][3] = -(right + left) / (right - left);
+    result[1][3] = -(top + bottom) / (top - bottom);
+    result[2][3] = -(farVal + nearVal) / (farVal - nearVal);
     return result;
 }
 
-Eigen::Matrix4f frustum(float left, float right, float bottom,
+Matrix4f frustum(float left, float right, float bottom,
                         float top, float nearVal,
                         float farVal) {
-    Eigen::Matrix4f result = Eigen::Matrix4f::Zero();
-    result(0, 0) = (2.0f * nearVal) / (right - left);
-    result(1, 1) = (2.0f * nearVal) / (top - bottom);
-    result(0, 2) = (right + left) / (right - left);
-    result(1, 2) = (top + bottom) / (top - bottom);
-    result(2, 2) = -(farVal + nearVal) / (farVal - nearVal);
-    result(3, 2) = -1.0f;
-    result(2, 3) = -(2.0f * farVal * nearVal) / (farVal - nearVal);
+    Matrix4f result = glm::mat4(0);
+    result[0][0] = (2.0f * nearVal) / (right - left);
+    result[1][1] = (2.0f * nearVal) / (top - bottom);
+    result[0][2] = (right + left) / (right - left);
+    result[1][2] = (top + bottom) / (top - bottom);
+    result[2][2] = -(farVal + nearVal) / (farVal - nearVal);
+    result[3][2] = -1.0f;
+    result[2][3] = -(2.0f * farVal * nearVal) / (farVal - nearVal);
     return result;
 }
 

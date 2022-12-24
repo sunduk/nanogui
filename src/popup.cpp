@@ -19,14 +19,14 @@ NAMESPACE_BEGIN(nanogui)
 
 Popup::Popup(Widget *parent, Window *parentWindow)
     : Window(parent, ""), mParentWindow(parentWindow),
-      mAnchorPos(Vector2i::Zero()), mAnchorHeight(30), mSide(Side::Right) {
+      mAnchorPos(Vector2i(0)), mAnchorHeight(30), mSide(Side::Right) {
 }
 
 void Popup::performLayout(NVGcontext *ctx) {
     if (mLayout || mChildren.size() != 1) {
         Widget::performLayout(ctx);
     } else {
-        mChildren[0]->setPosition(Vector2i::Zero());
+        mChildren[0]->setPosition(Vector2i(0));
         mChildren[0]->setSize(mSize);
         mChildren[0]->performLayout(ctx);
     }
@@ -53,30 +53,30 @@ void Popup::draw(NVGcontext* ctx) {
 
     /* Draw a drop shadow */
     NVGpaint shadowPaint = nvgBoxGradient(
-        ctx, mPos.x(), mPos.y(), mSize.x(), mSize.y(), cr*2, ds*2,
+        ctx, mPos.x, mPos.y, mSize.x, mSize.y, cr*2, ds*2,
         mTheme->mDropShadow, mTheme->mTransparent);
 
     nvgBeginPath(ctx);
-    nvgRect(ctx, mPos.x()-ds,mPos.y()-ds, mSize.x()+2*ds, mSize.y()+2*ds);
-    nvgRoundedRect(ctx, mPos.x(), mPos.y(), mSize.x(), mSize.y(), cr);
+    nvgRect(ctx, mPos.x-ds,mPos.y-ds, mSize.x+2*ds, mSize.y+2*ds);
+    nvgRoundedRect(ctx, mPos.x, mPos.y, mSize.x, mSize.y, cr);
     nvgPathWinding(ctx, NVG_HOLE);
     nvgFillPaint(ctx, shadowPaint);
     nvgFill(ctx);
 
     /* Draw window */
     nvgBeginPath(ctx);
-    nvgRoundedRect(ctx, mPos.x(), mPos.y(), mSize.x(), mSize.y(), cr);
+    nvgRoundedRect(ctx, mPos.x, mPos.y, mSize.x, mSize.y, cr);
 
     Vector2i base = mPos + Vector2i(0, mAnchorHeight);
     int sign = -1;
     if (mSide == Side::Left) {
-        base.x() += mSize.x();
+        base.x += mSize.x;
         sign = 1;
     }
 
-    nvgMoveTo(ctx, base.x() + 15*sign, base.y());
-    nvgLineTo(ctx, base.x() - 1*sign, base.y() - 15);
-    nvgLineTo(ctx, base.x() - 1*sign, base.y() + 15);
+    nvgMoveTo(ctx, base.x + 15*sign, base.y);
+    nvgLineTo(ctx, base.x - 1*sign, base.y - 15);
+    nvgLineTo(ctx, base.x - 1*sign, base.y + 15);
 
     nvgFillColor(ctx, mTheme->mWindowPopup);
     nvgFill(ctx);

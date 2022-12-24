@@ -29,6 +29,7 @@
 #include <stdint.h>
 #include <array>
 #include <vector>
+#include <glm/glm.hpp>
 
 /* Set to 1 to draw boxes around widgets */
 //#define NANOGUI_SHOW_WIDGET_BOUNDS 1
@@ -132,32 +133,43 @@ enum class Cursor {
 };
 
 /* Import some common Eigen types */
-/// Type alias to allow ``Eigen::Vector2f`` to be used as ``nanogui::Vector2f``.
-using Vector2f = Eigen::Vector2f;
-/// Type alias to allow ``Eigen::Vector3f`` to be used as ``nanogui::Vector3f``.
-using Vector3f = Eigen::Vector3f;
-/// Type alias to allow ``Eigen::Vector4f`` to be used as ``nanogui::Vector4f``.
-using Vector4f = Eigen::Vector4f;
-/// Type alias to allow ``Eigen::Vector2i`` to be used as ``nanogui::Vector2i``.
-using Vector2i = Eigen::Vector2i;
-/// Type alias to allow ``Eigen::Vector3i`` to be used as ``nanogui::Vector3i``.
-using Vector3i = Eigen::Vector3i;
-/// Type alias to allow ``Eigen::Vector4i`` to be used as ``nanogui::Vector4i``.
-using Vector4i = Eigen::Vector4i;
-/// Type alias to allow ``Eigen::Matrix3f`` to be used as ``nanogui::Matrix3f``.
-using Matrix3f = Eigen::Matrix3f;
-/// Type alias to allow ``Eigen::Matrix4f`` to be used as ``nanogui::Matrix4f``.
-using Matrix4f = Eigen::Matrix4f;
+/// Type alias to allow ``glm::Vector2f`` to be used as ``nanogui::Vector2f``.
+using Vector2f = glm::vec2;
+/// Type alias to allow ``glm::Vector3f`` to be used as ``nanogui::Vector3f``.
+using Vector3f = glm::vec3;
+/// Type alias to allow ``glm::Vector4f`` to be used as ``nanogui::Vector4f``.
+using Vector4f = glm::vec4;
+/// Type alias to allow ``glm::Vector2i`` to be used as ``nanogui::Vector2i``.
+using Vector2i = glm::i32vec2;
+/// Type alias to allow ``glm::Vector3i`` to be used as ``nanogui::Vector3i``.
+using Vector3i = glm::i32vec3;
+/// Type alias to allow ``glm::Vector4i`` to be used as ``nanogui::Vector4i``.
+using Vector4i = glm::i32vec4;
+/// Type alias to allow ``glm::Matrix3f`` to be used as ``nanogui::Matrix3f``.
+using Matrix3f = glm::mat3;
+/// Type alias to allow ``glm::Matrix4f`` to be used as ``nanogui::Matrix4f``.
+using Matrix4f = glm::mat4;
 /// Type alias to allow ``Eigen::VectorXf`` to be used as ``nanogui::VectorXf``.
 using VectorXf = Eigen::VectorXf;
 /// Type alias to allow ``Eigen::MatrixXf`` to be used as ``nanogui::MatrixXf``.
 using MatrixXf = Eigen::MatrixXf;
+using Quaternionf = glm::quat;
 
 /**
  * Convenience typedef for things like index buffers.  You would use it the same
  * as ``Eigen::MatrixXf``, only it is storing ``uint32_t`` instead of ``float``.
  */
 using MatrixXu = Eigen::Matrix<uint32_t, Eigen::Dynamic, Eigen::Dynamic>;
+
+
+Vector2i cwiseMax(const Vector2i& a, const Vector2i& b);
+Vector2i cwiseMin(const Vector2i& a, const Vector2i& b);
+Vector2i cwiseQuotient(const Vector2i& a, const Vector2i& b);
+int minCoeff(const Vector2i& a);
+bool moreThan(const Vector2i& a, float b);
+bool lessThan(const Vector2i& a, const Vector2i& b);
+////TODO:lsh. int prod(const Vector2i a);
+
 
 /**
  * \class Color common.h nanogui/common.h
@@ -188,8 +200,8 @@ using MatrixXu = Eigen::Matrix<uint32_t, Eigen::Dynamic, Eigen::Dynamic>;
  * You can and should still use the various convenience methods such as ``any()``,
  * ``all()``, ``head<index>()``, etc provided by Eigen.
  */
-class Color : public Eigen::Vector4f {
-    typedef Eigen::Vector4f Base;
+class Color : public glm::vec4{
+    typedef glm::vec4 Base;
 public:
     /// Default constructor: represents black (``r, g, b, a = 0``)
     Color() : Color(0, 0, 0, 0) {}
@@ -200,7 +212,7 @@ public:
      * \param color
      * The four dimensional float vector being copied.
      */
-    Color(const Eigen::Vector4f &color) : Eigen::Vector4f(color) { }
+    Color(const glm::vec4 &color) : glm::vec4(color) { }
 
     /**
      * Copies (x, y, z) from the input vector, and uses the value specified by
@@ -212,8 +224,8 @@ public:
      * \param alpha
      * The value to set this object's alpha component to.
      */
-    Color(const Eigen::Vector3f &color, float alpha)
-        : Color(color(0), color(1), color(2), alpha) { }
+    Color(const glm::vec3 &color, float alpha)
+        : Color(color.x, color.y, color.z, alpha) { }
 
     /**
      * Copies (x, y, z) from the input vector, casted as floats first and then
@@ -227,8 +239,8 @@ public:
      * \param alpha
      * The value to set this object's alpha component to, will be divided by ``255.0``.
      */
-    Color(const Eigen::Vector3i &color, int alpha)
-        : Color(color.cast<float>() / 255.f, alpha / 255.f) { }
+    Color(const glm::vec3 &color, int alpha)
+        : Color(color.x / 255.f, color.y / 255.f, color.z / 255.f, alpha / 255.f) { }
 
     /**
      * Copies (x, y, z) from the input vector, and sets the alpha of this color
@@ -237,7 +249,7 @@ public:
      * \param color
      * The three dimensional float vector being copied.
      */
-    Color(const Eigen::Vector3f &color) : Color(color, 1.0f) {}
+    Color(const glm::vec3 &color) : Color(color, 1.0f) {}
 
     /**
      * Copies (x, y, z) from the input vector, casting to floats and dividing by
@@ -246,8 +258,8 @@ public:
      * \param color
      * The three dimensional integer vector being copied, will be divided by ``255.0``.
      */
-    Color(const Eigen::Vector3i &color)
-        : Color((Vector3f)(color.cast<float>() / 255.f)) { }
+    Color(const glm::i32vec3 &color)
+        : Color(color.x / 255.f, color.y / 255.f, color.z / 255.f, 1.0f) { }
 
     /**
      * Copies (x, y, z, w) from the input vector, casting to floats and dividing
@@ -256,8 +268,8 @@ public:
      * \param color
      * The three dimensional integer vector being copied, will be divided by ``255.0``.
      */
-    Color(const Eigen::Vector4i &color)
-        : Color((Vector4f)(color.cast<float>() / 255.f)) { }
+    Color(const glm::i32vec4 &color)
+        : Color(color.x / 255.f, color.y / 255.f, color.z / 255.f, color.w / 255.f) { }
 
     /**
      * Creates the Color ``(intensity, intensity, intensity, alpha)``.
@@ -269,7 +281,7 @@ public:
      * The alpha component of the color.
      */
     Color(float intensity, float alpha)
-        : Color(Vector3f::Constant(intensity), alpha) { }
+        : Color(Vector3f(intensity), alpha) { }
 
     /**
      * Creates the Color ``(intensity, intensity, intensity, alpha) / 255.0``.
@@ -282,7 +294,7 @@ public:
      * The alpha component of the color, will be divided by ``255.0``.
      */
     Color(int intensity, int alpha)
-        : Color(Vector3i::Constant(intensity), alpha) { }
+        : Color(Vector3i(intensity), alpha) { }
 
     /**
      * Explicit constructor: creates the Color ``(r, g, b, a)``.
@@ -330,17 +342,17 @@ public:
     }
 
     /// Return a reference to the red channel
-    float &r() { return x(); }
+    float &r() { return x; }
     /// Return a reference to the red channel (const version)
-    const float &r() const { return x(); }
+    const float &r() const { return x; }
     /// Return a reference to the green channel
-    float &g() { return y(); }
+    float &g() { return y; }
     /// Return a reference to the green channel (const version)
-    const float &g() const { return y(); }
+    const float &g() const { return y; }
     /// Return a reference to the blue channel
-    float &b() { return z(); }
+    float &b() { return z; }
     /// Return a reference to the blue channel (const version)
-    const float &b() const { return z(); }
+    const float &b() const { return z; }
 
     /**
      * Computes the luminance as ``l = 0.299r + 0.587g + 0.144b + 0.0a``.  If
@@ -349,7 +361,8 @@ public:
      * an alpha component of 1.0.
      */
     Color contrastingColor() const {
-        float luminance = cwiseProduct(Color(0.299f, 0.587f, 0.144f, 0.f)).sum();
+        //float luminance = cwiseProduct(Color(0.299f, 0.587f, 0.144f, 0.f)).sum();
+        float luminance = 0.5f;
         return Color(luminance < 0.5f ? 1.f : 0.f, 1.f);
     }
 

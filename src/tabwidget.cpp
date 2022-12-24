@@ -147,13 +147,13 @@ const std::string &TabWidget::tabLabelAt(int index) const {
 }
 
 void TabWidget::performLayout(NVGcontext* ctx) {
-    int headerHeight = mHeader->preferredSize(ctx).y();
+    int headerHeight = mHeader->preferredSize(ctx).y;
     int margin = mTheme->mTabInnerMargin;
     mHeader->setPosition({ 0, 0 });
-    mHeader->setSize({ mSize.x(), headerHeight });
+    mHeader->setSize({ mSize.x, headerHeight });
     mHeader->performLayout(ctx);
     mContent->setPosition({ margin, headerHeight + margin });
-    mContent->setSize({ mSize.x() - 2 * margin, mSize.y() - 2*margin - headerHeight });
+    mContent->setSize({ mSize.x - 2 * margin, mSize.y - 2*margin - headerHeight });
     mContent->performLayout(ctx);
 }
 
@@ -162,34 +162,34 @@ Vector2i TabWidget::preferredSize(NVGcontext* ctx) const {
     auto headerSize = mHeader->preferredSize(ctx);
     int margin = mTheme->mTabInnerMargin;
     auto borderSize = Vector2i(2 * margin, 2 * margin);
-    Vector2i tabPreferredSize = contentSize + borderSize + Vector2i(0, headerSize.y());
+    Vector2i tabPreferredSize = contentSize + borderSize + Vector2i(0, headerSize.y);
     return tabPreferredSize;
 }
 
 void TabWidget::draw(NVGcontext* ctx) {
-    int tabHeight = mHeader->preferredSize(ctx).y();
+    int tabHeight = mHeader->preferredSize(ctx).y;
     auto activeArea = mHeader->activeButtonArea();
 
 
     for (int i = 0; i < 3; ++i) {
         nvgSave(ctx);
         if (i == 0)
-            nvgIntersectScissor(ctx, mPos.x(), mPos.y(), activeArea.first.x() + 1, mSize.y());
+            nvgIntersectScissor(ctx, mPos.x, mPos.y, activeArea.first.x + 1, mSize.y);
         else if (i == 1)
-            nvgIntersectScissor(ctx, mPos.x() + activeArea.second.x(), mPos.y(), mSize.x() - activeArea.second.x(), mSize.y());
+            nvgIntersectScissor(ctx, mPos.x + activeArea.second.x, mPos.y, mSize.x - activeArea.second.x, mSize.y);
         else
-            nvgIntersectScissor(ctx, mPos.x(), mPos.y() + tabHeight + 2, mSize.x(), mSize.y());
+            nvgIntersectScissor(ctx, mPos.x, mPos.y + tabHeight + 2, mSize.x, mSize.y);
 
         nvgBeginPath(ctx);
         nvgStrokeWidth(ctx, 1.0f);
-        nvgRoundedRect(ctx, mPos.x() + 0.5f, mPos.y() + tabHeight + 1.5f, mSize.x() - 1,
-                       mSize.y() - tabHeight - 2, mTheme->mButtonCornerRadius);
+        nvgRoundedRect(ctx, mPos.x + 0.5f, mPos.y + tabHeight + 1.5f, mSize.x - 1,
+                       mSize.y - tabHeight - 2, mTheme->mButtonCornerRadius);
         nvgStrokeColor(ctx, mTheme->mBorderLight);
         nvgStroke(ctx);
 
         nvgBeginPath(ctx);
-        nvgRoundedRect(ctx, mPos.x() + 0.5f, mPos.y() + tabHeight + 0.5f, mSize.x() - 1,
-                       mSize.y() - tabHeight - 2, mTheme->mButtonCornerRadius);
+        nvgRoundedRect(ctx, mPos.x + 0.5f, mPos.y + tabHeight + 0.5f, mSize.x - 1,
+                       mSize.y - tabHeight - 2, mTheme->mButtonCornerRadius);
         nvgStrokeColor(ctx, mTheme->mBorderDark);
         nvgStroke(ctx);
         nvgRestore(ctx);

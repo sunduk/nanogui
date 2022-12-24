@@ -21,8 +21,8 @@ NAMESPACE_BEGIN(nanogui)
 
 Widget::Widget(Widget *parent)
     : mParent(nullptr), mTheme(nullptr), mLayout(nullptr),
-      mPos(Vector2i::Zero()), mSize(Vector2i::Zero()),
-      mFixedSize(Vector2i::Zero()), mVisible(true), mEnabled(true),
+      mPos(Vector2i(0)), mSize(Vector2i(0)),
+      mFixedSize(Vector2i(0)), mVisible(true), mEnabled(true),
       mFocused(false), mMouseFocus(false), mTooltip(""), mFontSize(-1.0f),
       mIconExtraScale(1.0f), mCursor(Cursor::Arrow) {
     if (parent)
@@ -206,7 +206,7 @@ void Widget::draw(NVGcontext *ctx) {
     #if NANOGUI_SHOW_WIDGET_BOUNDS
         nvgStrokeWidth(ctx, 1.0f);
         nvgBeginPath(ctx);
-        nvgRect(ctx, mPos.x() - 0.5f, mPos.y() - 0.5f, mSize.x() + 1, mSize.y() + 1);
+        nvgRect(ctx, mPos.x - 0.5f, mPos.y - 0.5f, mSize.x + 1, mSize.y + 1);
         nvgStrokeColor(ctx, nvgRGBA(255, 0, 0, 255));
         nvgStroke(ctx);
     #endif
@@ -215,11 +215,11 @@ void Widget::draw(NVGcontext *ctx) {
         return;
 
     nvgSave(ctx);
-    nvgTranslate(ctx, mPos.x(), mPos.y());
+    nvgTranslate(ctx, mPos.x, mPos.y);
     for (auto child : mChildren) {
         if (child->visible()) {
             nvgSave(ctx);
-            nvgIntersectScissor(ctx, child->mPos.x(), child->mPos.y(), child->mSize.x(), child->mSize.y());
+            nvgIntersectScissor(ctx, child->mPos.x, child->mPos.y, child->mSize.x, child->mSize.y);
             child->draw(ctx);
             nvgRestore(ctx);
         }

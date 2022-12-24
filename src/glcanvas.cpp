@@ -30,11 +30,11 @@ GLCanvas::GLCanvas(Widget *parent)
 void GLCanvas::drawWidgetBorder(NVGcontext *ctx) const {
     nvgBeginPath(ctx);
     nvgStrokeWidth(ctx, 1.0f);
-    nvgRoundedRect(ctx, mPos.x() - 0.5f, mPos.y() - 0.5f,
-                   mSize.x() + 1, mSize.y() + 1, mTheme->mWindowCornerRadius);
+    nvgRoundedRect(ctx, mPos.x - 0.5f, mPos.y - 0.5f,
+                   mSize.x + 1, mSize.y + 1, mTheme->mWindowCornerRadius);
     nvgStrokeColor(ctx, mTheme->mBorderLight);
-    nvgRoundedRect(ctx, mPos.x() - 1.0f, mPos.y() - 1.0f,
-                   mSize.x() + 2, mSize.y() + 2, mTheme->mWindowCornerRadius);
+    nvgRoundedRect(ctx, mPos.x - 1.0f, mPos.y - 1.0f,
+                   mSize.x + 2, mSize.y + 2, mTheme->mWindowCornerRadius);
     nvgStrokeColor(ctx, mTheme->mBorderDark);
     nvgStroke(ctx);
 }
@@ -50,13 +50,13 @@ void GLCanvas::draw(NVGcontext *ctx) {
     assert(screen);
 
     float pixelRatio = screen->pixelRatio();
-    Vector2f screenSize = screen->size().cast<float>();
+    Vector2f screenSize = screen->size();
     Vector2i positionInScreen = absolutePosition();
 
-    Vector2i size = (mSize.cast<float>() * pixelRatio).cast<int>(),
+    Vector2i size = ((Vector2f)mSize * pixelRatio),
              imagePosition = (Vector2f(positionInScreen[0],
                                        screenSize[1] - positionInScreen[1] -
-                                       (float) mSize[1]) * pixelRatio).cast<int>();
+                                       (float) mSize[1]) * pixelRatio);
 
     GLint storedViewport[4];
     glGetIntegerv(GL_VIEWPORT, storedViewport);

@@ -167,8 +167,8 @@ public:
         widget->setEditable(editable);
         widget->setFontSize(mWidgetFontSize);
         Vector2i fs = widget->fixedSize();
-        widget->setFixedSize(Vector2i(fs.x() != 0 ? fs.x() : mFixedSize.x(),
-                                      fs.y() != 0 ? fs.y() : mFixedSize.y()));
+        widget->setFixedSize(Vector2i(fs.x != 0 ? fs.x : mFixedSize.x,
+                                      fs.y != 0 ? fs.y : mFixedSize.y));
         mRefreshCallbacks.push_back(refresh);
         if (mLayout->rowCount() > 0)
             mLayout->appendRow(mVariableSpacing);

@@ -351,5 +351,40 @@ void Object::decRef(bool dealloc) const noexcept {
 
 Object::~Object() { }
 
+
+Vector2i cwiseMax(const Vector2i& a, const Vector2i& b)
+{
+    return Vector2i(max(a.x, b.x), max(a.y, b.y));
+}
+
+Vector2i cwiseMin(const Vector2i& a, const Vector2i& b)
+{
+    return Vector2i(min(a.x, b.x), min(a.y, b.y));
+}
+
+Vector2i cwiseQuotient(const Vector2i& a, const Vector2i& b)
+{
+    return Vector2i(a.x / b.x, a.y / b.y);
+}
+
+int minCoeff(const Vector2i a)
+{
+    return min(a.x, a.y);
+}
+
+bool moreThan(const Vector2i a, float b)
+{
+    return (a.x >= b) && (a.y >= b);
+}
+
+bool lessThan(const Vector2i& a, const Vector2i& b)
+{
+    return (a.x < b.x) && (a.y < b.y);
+}
+//TODO:lsh.
+//int prod(const Vector2i a)
+//{
+//}
+
 NAMESPACE_END(nanogui)
 

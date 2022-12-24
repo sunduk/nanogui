@@ -13,8 +13,9 @@
 #pragma once
 
 #include <nanogui/opengl.h>
-#include <Eigen/Geometry>
+//#include <Eigen/Geometry>
 #include <map>
+#include "glm/gtx/norm.hpp"
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 namespace half_float { class half; }
@@ -46,7 +47,7 @@ NAMESPACE_END(detail)
 
 #endif // DOXYGEN_SHOULD_SKIP_THIS
 
-using Eigen::Quaternionf;
+//using Eigen::Quaternionf;
 
 class GLUniformBuffer;
 
@@ -264,37 +265,37 @@ public:
     /// Initialize a uniform parameter with a 2D vector (int)
     template <typename T, typename std::enable_if<detail::type_traits<T>::integral == 1, int>::type = 0>
     void setUniform(const std::string &name, const Eigen::Matrix<T, 2, 1>  &v, bool warn = true) {
-        glUniform2i(uniform(name, warn), (int) v.x(), (int) v.y());
+        glUniform2i(uniform(name, warn), (int) v.x, (int) v.y);
     }
 
     /// Initialize a uniform parameter with a 2D vector (float)
     template <typename T, typename std::enable_if<detail::type_traits<T>::integral == 0, int>::type = 0>
     void setUniform(const std::string &name, const Eigen::Matrix<T, 2, 1>  &v, bool warn = true) {
-        glUniform2f(uniform(name, warn), (float) v.x(), (float) v.y());
+        glUniform2f(uniform(name, warn), (float) v.x, (float) v.y);
     }
 
     /// Initialize a uniform parameter with a 3D vector (int)
     template <typename T, typename std::enable_if<detail::type_traits<T>::integral == 1, int>::type = 0>
     void setUniform(const std::string &name, const Eigen::Matrix<T, 3, 1>  &v, bool warn = true) {
-        glUniform3i(uniform(name, warn), (int) v.x(), (int) v.y(), (int) v.z());
+        glUniform3i(uniform(name, warn), (int) v.x, (int) v.y, (int) v.z);
     }
 
     /// Initialize a uniform parameter with a 3D vector (float)
     template <typename T, typename std::enable_if<detail::type_traits<T>::integral == 0, int>::type = 0>
     void setUniform(const std::string &name, const Eigen::Matrix<T, 3, 1>  &v, bool warn = true) {
-        glUniform3f(uniform(name, warn), (float) v.x(), (float) v.y(), (float) v.z());
+        glUniform3f(uniform(name, warn), (float) v.x, (float) v.y, (float) v.z);
     }
 
     /// Initialize a uniform parameter with a 4D vector (int)
     template <typename T, typename std::enable_if<detail::type_traits<T>::integral == 1, int>::type = 0>
     void setUniform(const std::string &name, const Eigen::Matrix<T, 4, 1>  &v, bool warn = true) {
-        glUniform4i(uniform(name, warn), (int) v.x(), (int) v.y(), (int) v.z(), (int) v.w());
+        glUniform4i(uniform(name, warn), (int) v.x, (int) v.y, (int) v.z, (int) v.w);
     }
 
     /// Initialize a uniform parameter with a 4D vector (float)
     template <typename T, typename std::enable_if<detail::type_traits<T>::integral == 0, int>::type = 0>
     void setUniform(const std::string &name, const Eigen::Matrix<T, 4, 1>  &v, bool warn = true) {
-        glUniform4f(uniform(name, warn), (float) v.x(), (float) v.y(), (float) v.z(), (float) v.w());
+        glUniform4f(uniform(name, warn), (float) v.x, (float) v.y, (float) v.z, (float) v.w);
     }
 
     /// Initialize a uniform buffer with a uniform buffer object
@@ -306,6 +307,10 @@ public:
         for (auto const &buf : mBufferObjects)
             size += buf.second.size;
         return size;
+    }
+
+    void setUniform(const std::string& name, const Vector2f& v, bool warn = true) {
+        glUniform2f(uniform(name, warn), v.x, v.y);
     }
 
     /**
@@ -602,7 +607,7 @@ public:
  *     ``p`` before calling :func:`Arcball::button <nanogui::Arcball::button>`
  *     or :func:`Arcball::motion <nanogui::Arcball::motion>`.  For example, if
  *     controlling the right half of the screen, you might create
- *     ``Vector2i adjusted_click(p.x() - (mSize.x() / 2), p.y())``, and then
+ *     ``Vector2i adjusted_click(p.x - (mSize.x / 2), p.y)``, and then
  *     call ``mArcball.motion(adjusted_click)``.
  * \endrst
  */
@@ -622,9 +627,9 @@ struct Arcball {
      *     \ref mSpeedFactor.
      */
     Arcball(float speedFactor = 2.0f)
-        : mActive(false), mLastPos(Vector2i::Zero()), mSize(Vector2i::Zero()),
-          mQuat(Quaternionf::Identity()),
-          mIncr(Quaternionf::Identity()),
+        : mActive(false), mLastPos(Vector2i(0)), mSize(Vector2i(0)),
+          mQuat(1, 0, 0, 0),
+          mIncr(1, 0, 0, 0),
           mSpeedFactor(speedFactor) { }
 
     /**
@@ -638,9 +643,9 @@ struct Arcball {
      * \endrst
      */
     Arcball(const Quaternionf &quat)
-        : mActive(false), mLastPos(Vector2i::Zero()), mSize(Vector2i::Zero()),
+        : mActive(false), mLastPos(Vector2i(0)), mSize(Vector2i(0)),
           mQuat(quat),
-          mIncr(Quaternionf::Identity()),
+          mIncr(1, 0, 0, 0),
           mSpeedFactor(2.0f) { }
 
     /**
@@ -657,9 +662,9 @@ struct Arcball {
     /// Sets the rotation of this Arcball.  The Arcball will be marked as **not** active.
     void setState(const Quaternionf &state) {
         mActive = false;
-        mLastPos = Vector2i::Zero();
+        mLastPos = Vector2i(0);
         mQuat = state;
-        mIncr = Quaternionf::Identity();
+        mIncr = glm::identity<Quaternionf>();
     }
 
     /**
@@ -698,8 +703,8 @@ struct Arcball {
         mActive = pressed;
         mLastPos = pos;
         if (!mActive)
-            mQuat = (mIncr * mQuat).normalized();
-        mIncr = Quaternionf::Identity();
+            mQuat = glm::normalize(mIncr * mQuat);
+        mIncr = glm::identity<Quaternionf>();
     }
 
     /**
@@ -714,29 +719,29 @@ struct Arcball {
             return false;
 
         /* Based on the rotation controller from AntTweakBar */
-        float invMinDim = 1.0f / mSize.minCoeff();
-        float w = (float) mSize.x(), h = (float) mSize.y();
+        float invMinDim = 1.0f / minCoeff(mSize);
+        float w = (float) mSize.x, h = (float) mSize.y;
 
-        float ox = (mSpeedFactor * (2*mLastPos.x() - w) + w) - w - 1.0f;
-        float tx = (mSpeedFactor * (2*pos.x()      - w) + w) - w - 1.0f;
-        float oy = (mSpeedFactor * (h - 2*mLastPos.y()) + h) - h - 1.0f;
-        float ty = (mSpeedFactor * (h - 2*pos.y())      + h) - h - 1.0f;
+        float ox = (mSpeedFactor * (2*mLastPos.x - w) + w) - w - 1.0f;
+        float tx = (mSpeedFactor * (2*pos.x      - w) + w) - w - 1.0f;
+        float oy = (mSpeedFactor * (h - 2*mLastPos.y) + h) - h - 1.0f;
+        float ty = (mSpeedFactor * (h - 2*pos.y)      + h) - h - 1.0f;
 
         ox *= invMinDim; oy *= invMinDim;
         tx *= invMinDim; ty *= invMinDim;
 
         Vector3f v0(ox, oy, 1.0f), v1(tx, ty, 1.0f);
-        if (v0.squaredNorm() > 1e-4f && v1.squaredNorm() > 1e-4f) {
-            v0.normalize(); v1.normalize();
-            Vector3f axis = v0.cross(v1);
-            float sa = std::sqrt(axis.dot(axis)),
-                  ca = v0.dot(v1),
+        if (glm::length2(v0) > 1e-4f && glm::length2(v1) > 1e-4f) {
+            v0 = glm::normalize(v0); v1 = glm::normalize(v1);
+            Vector3f axis = glm::cross(v0, v1);
+            float sa = std::sqrt(glm::dot(axis, axis)),
+                  ca = glm::dot(v0, v1),
                   angle = std::atan2(sa, ca);
             if (tx*tx + ty*ty > 1.0f)
                 angle *= 1.0f + 0.2f * (std::sqrt(tx*tx + ty*ty) - 1.0f);
-            mIncr = Eigen::AngleAxisf(angle, axis.normalized());
-            if (!std::isfinite(mIncr.norm()))
-                mIncr = Quaternionf::Identity();
+            mIncr = glm::angleAxis(angle, glm::normalize(axis));
+            if (!std::isfinite(glm::length(mIncr)))
+                mIncr = glm::identity<Quaternionf>();
         }
         return true;
     }
@@ -748,8 +753,8 @@ struct Arcball {
      * bottom row.
      */
     Matrix4f matrix() const {
-        Matrix4f result2 = Matrix4f::Identity();
-        result2.block<3,3>(0, 0) = (mIncr * mQuat).toRotationMatrix();
+        Matrix4f result2 = glm::identity<Matrix4f>();
+        result2 = glm::toMat3(mIncr * mQuat);
         return result2;
     }
 
@@ -767,7 +772,7 @@ struct Arcball {
      * have a callback that created a \ref nanogui::MessageDialog which will now
      * be in focus.
      */
-    void interrupt() { button(Vector2i::Zero(), false); }
+    void interrupt() { button(Vector2i(0), false); }
 
 protected:
     /// Whether or not this Arcball is currently active.

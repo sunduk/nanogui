@@ -17,6 +17,7 @@
 #include <nanogui/serializer/core.h>
 #include <Eigen/QR>
 #include <Eigen/Geometry>
+#include <glm/gtx/matrix_transform_2d.hpp>
 
 NAMESPACE_BEGIN(nanogui)
 
@@ -35,10 +36,10 @@ void ColorWheel::draw(NVGcontext *ctx) {
     if (!mVisible)
         return;
 
-    float x = mPos.x(),
-          y = mPos.y(),
-          w = mSize.x(),
-          h = mSize.y();
+    float x = mPos.x,
+          y = mPos.y,
+          w = mSize.x,
+          h = mSize.y;
 
     NVGcontext* vg = ctx;
 
@@ -161,10 +162,10 @@ bool ColorWheel::mouseDragEvent(const Vector2i &p, const Vector2i &,
 }
 
 ColorWheel::Region ColorWheel::adjustPosition(const Vector2i &p, Region consideredRegions) {
-    float x = p.x() - mPos.x(),
-          y = p.y() - mPos.y(),
-          w = mSize.x(),
-          h = mSize.y();
+    float x = p.x - mPos.x,
+          y = p.y - mPos.y,
+          w = mSize.x,
+          h = mSize.y;
 
     float cx = w*0.5f;
     float cy = h*0.5f;
@@ -198,17 +199,41 @@ ColorWheel::Region ColorWheel::adjustPosition(const Vector2i &p, Region consider
     float bx = std::cos(-120.0f/180.0f*NVG_PI) * r;
     float by = std::sin(-120.0f/180.0f*NVG_PI) * r;
 
-    typedef Eigen::Matrix<float,2,2>        Matrix2f;
+    //TODO:행렬 인덱스 순서 맞는지???
+    //typedef Eigen::Matrix<float,2,2>        Matrix2f;
 
     Eigen::Matrix<float, 2, 3> triangle;
     triangle << ax,bx,r,
                 ay,by,0;
-    triangle = Eigen::Rotation2D<float>(mHue * 2 * NVG_PI).matrix() * triangle;
+    Eigen::Matrix<float, 2, 2> m = Eigen::Rotation2D<float>(mHue * 2 * NVG_PI).matrix();
+    triangle = m * triangle;
 
-    Matrix2f T;
+    glm::mat2x3 triangle(
+        {
+            ax, bx, r,
+            ay, by, 0
+        });
+    float angle = mHue * 2 * NVG_PI;
+    float sinA = glm::sin(angle);
+    float cosA = glm::cos(angle);
+    glm::mat2x2 m2 = glm::mat2x2(
+        {
+            cosA, -sinA,
+            sinA, cosA
+        });
+    triangle = m2 * triangle;
+
+    /*Matrix2f T;
     T << triangle(0,0) - triangle(0,2), triangle(0,1) - triangle(0,2),
          triangle(1,0) - triangle(1,2), triangle(1,1) - triangle(1,2);
-    Vector2f pos { x - triangle(0,2), y - triangle(1,2) };
+    Vector2f pos { x - triangle(0,2), y - triangle(1,2) };*/
+
+    glm::mat2x2 T(
+        {
+            triangle[0][0] - triangle[0][2], triangle[0][1] - triangle[0][2],
+            triangle[1][0] - triangle[1][2], triangle[1][1] - triangle[1][2]
+        });
+    Vector2f pos{ x - triangle[0][2], y - triangle[1][2] };
 
     Vector2f bary = T.colPivHouseholderQr().solve(pos);
     float l0 = bary[0], l1 = bary[1], l2 = 1 - l0 - l1;

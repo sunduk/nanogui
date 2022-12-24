@@ -18,6 +18,9 @@
 #include <fstream>
 #include <memory>
 #include <set>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/fwd.hpp>
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS
 namespace half_float { class half; }
@@ -323,32 +326,61 @@ struct serialization_helper<Eigen::Matrix<Scalar, Rows, Cols, Options, MaxRows, 
     }
 };
 
-template <> struct serialization_helper<nanogui::Color>
-    : public serialization_helper<Eigen::Matrix<float, 4, 1>> { };
-
-template <typename Scalar, int Options>
-struct serialization_helper<Eigen::Quaternion<Scalar, Options>>
-    : public serialization_helper<Eigen::Matrix<Scalar, 4, 1>> {
-    typedef Eigen::Quaternion<Scalar, Options> Quat;
-
+template <>
+struct serialization_helper<glm::vec4> {
     static std::string type_id() {
-        return "Q" + serialization_helper<Scalar>::type_id();
+        return "M" + serialization_helper<float>::type_id();
     }
 
-    static void write(Serializer &s, const Quat *value, size_t count) {
-        for (size_t i = 0; i<count; ++i) {
-            serialization_helper<Scalar>::write(s, value->coeffs().data(), 4);
+    static void write(Serializer& s, const glm::vec4* value, size_t count) {
+        for (size_t i = 0; i < count; ++i) {
+            uint32_t rows = 4, cols = 1;
+            s.write(&rows, sizeof(uint32_t));
+            s.write(&cols, sizeof(uint32_t));
+            serialization_helper<float>::write(s, glm::value_ptr(*value), rows * cols);
             value++;
         }
     }
 
-    static void read(Serializer &s, Quat *value, size_t count) {
-        for (size_t i = 0; i<count; ++i) {
-            serialization_helper<Scalar>::read(s, value->coeffs().data(), 4);
+    static void read(Serializer& s, glm::vec4* value, size_t count) {
+        for (size_t i = 0; i < count; ++i) {
+            uint32_t rows = 0, cols = 0;
+            s.read(&rows, sizeof(uint32_t));
+            s.read(&cols, sizeof(uint32_t));
+            serialization_helper<float>::read(s, glm::value_ptr(*value), rows * cols);
             value++;
         }
     }
 };
+
+template <> struct serialization_helper<nanogui::Color>
+    //: public serialization_helper<Eigen::Matrix<float, 4, 1>> { };
+    : public serialization_helper<glm::vec4> { };
+
+//TODO:not used?
+//template <typename Scalar, int Options>
+//struct serialization_helper<Eigen::Quaternion<Scalar, Options>>
+//    : public serialization_helper<Eigen::Matrix<Scalar, 4, 1>> {
+//    typedef Eigen::Quaternion<Scalar, Options> Quat;
+//
+//    static std::string type_id() {
+//        return "Q" + serialization_helper<Scalar>::type_id();
+//    }
+//
+//    static void write(Serializer &s, const Quat *value, size_t count) {
+//        for (size_t i = 0; i<count; ++i) {
+//            serialization_helper<Scalar>::write(s, value->coeffs().data(), 4);
+//            value++;
+//        }
+//    }
+//
+//    static void read(Serializer &s, Quat *value, size_t count) {
+//        for (size_t i = 0; i<count; ++i) {
+//            serialization_helper<Scalar>::read(s, value->coeffs().data(), 4);
+//            value++;
+//        }
+//    }
+//};
 
 template <>
 struct serialization_helper<Widget> {

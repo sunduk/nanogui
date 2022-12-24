@@ -35,14 +35,14 @@ void Label::setTheme(Theme *theme) {
 
 Vector2i Label::preferredSize(NVGcontext *ctx) const {
     if (mCaption == "")
-        return Vector2i::Zero();
+        return Vector2i(0);
     nvgFontFace(ctx, mFont.c_str());
     nvgFontSize(ctx, fontSize());
-    if (mFixedSize.x() > 0) {
+    if (mFixedSize.x > 0) {
         float bounds[4];
         nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
-        nvgTextBoxBounds(ctx, mPos.x(), mPos.y(), mFixedSize.x(), mCaption.c_str(), nullptr, bounds);
-        return Vector2i(mFixedSize.x(), bounds[3] - bounds[1]);
+        nvgTextBoxBounds(ctx, mPos.x, mPos.y, mFixedSize.x, mCaption.c_str(), nullptr, bounds);
+        return Vector2i(mFixedSize.x, bounds[3] - bounds[1]);
     } else {
         nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
         return Vector2i(
@@ -57,12 +57,12 @@ void Label::draw(NVGcontext *ctx) {
     nvgFontFace(ctx, mFont.c_str());
     nvgFontSize(ctx, fontSize());
     nvgFillColor(ctx, mColor);
-    if (mFixedSize.x() > 0) {
+    if (mFixedSize.x > 0) {
         nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
-        nvgTextBox(ctx, mPos.x(), mPos.y(), mFixedSize.x(), mCaption.c_str(), nullptr);
+        nvgTextBox(ctx, mPos.x, mPos.y, mFixedSize.x, mCaption.c_str(), nullptr);
     } else {
         nvgTextAlign(ctx, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE);
-        nvgText(ctx, mPos.x(), mPos.y() + mSize.y() * 0.5f, mCaption.c_str(), nullptr);
+        nvgText(ctx, mPos.x, mPos.y + mSize.y * 0.5f, mCaption.c_str(), nullptr);
     }
 }
 

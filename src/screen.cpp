@@ -159,7 +159,7 @@ Screen::Screen(const Vector2i &size, const std::string &caption, bool resizable,
         mGLFWWindow = glfwCreateWindow(mode->width, mode->height,
                                        caption.c_str(), monitor, nullptr);
     } else {
-        mGLFWWindow = glfwCreateWindow(size.x(), size.y(),
+        mGLFWWindow = glfwCreateWindow(size.x, size.y,
                                        caption.c_str(), nullptr, nullptr);
     }
 
@@ -312,7 +312,7 @@ void Screen::initialize(GLFWwindow *window, bool shutdownGLFWOnDestruct) {
 
 #if defined(_WIN32) || defined(__linux__)
     if (mPixelRatio != 1 && !mFullscreen)
-        glfwSetWindowSize(window, mSize.x() * mPixelRatio, mSize.y() * mPixelRatio);
+        glfwSetWindowSize(window, mSize.x * mPixelRatio, mSize.y * mPixelRatio);
 #endif
 
 #if defined(NANOGUI_GLAD)
@@ -345,7 +345,7 @@ void Screen::initialize(GLFWwindow *window, bool shutdownGLFWOnDestruct) {
 
     mVisible = glfwGetWindowAttrib(window, GLFW_VISIBLE) != 0;
     setTheme(new Theme(mNVGContext));
-    mMousePos = Vector2i::Zero();
+    mMousePos = Vector2i(0);
     mMouseState = mModifiers = 0;
     mDragActive = false;
     mLastInteraction = glfwGetTime();
@@ -394,9 +394,9 @@ void Screen::setSize(const Vector2i &size) {
     Widget::setSize(size);
 
 #if defined(_WIN32) || defined(__linux__)
-    glfwSetWindowSize(mGLFWWindow, size.x() * mPixelRatio, size.y() * mPixelRatio);
+    glfwSetWindowSize(mGLFWWindow, size.x * mPixelRatio, size.y * mPixelRatio);
 #else
-    glfwSetWindowSize(mGLFWWindow, size.x(), size.y());
+    glfwSetWindowSize(mGLFWWindow, size.x, size.y);
 #endif
 }
 
@@ -420,8 +420,8 @@ void Screen::drawWidgets() {
     glfwGetWindowSize(mGLFWWindow, &mSize[0], &mSize[1]);
 
 #if defined(_WIN32) || defined(__linux__)
-    mSize = (mSize.cast<float>() / mPixelRatio).cast<int>();
-    mFBSize = (mSize.cast<float>() * mPixelRatio).cast<int>();
+    mSize = ((Vector2f)mSize / mPixelRatio);
+    mFBSize = ((Vector2f)mSize * mPixelRatio);
 #else
     /* Recompute pixel ratio on OSX */
     if (mSize[0])
@@ -450,12 +450,12 @@ void Screen::drawWidgets() {
             Vector2i pos = widget->absolutePosition() +
                            Vector2i(widget->width() / 2, widget->height() + 10);
 
-            nvgTextBounds(mNVGContext, pos.x(), pos.y(),
+            nvgTextBounds(mNVGContext, pos.x, pos.y,
                             widget->tooltip().c_str(), nullptr, bounds);
             int h = (bounds[2] - bounds[0]) / 2;
             if (h > tooltipWidth / 2) {
                 nvgTextAlign(mNVGContext, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
-                nvgTextBoxBounds(mNVGContext, pos.x(), pos.y(), tooltipWidth,
+                nvgTextBoxBounds(mNVGContext, pos.x, pos.y, tooltipWidth,
                                 widget->tooltip().c_str(), nullptr, bounds);
 
                 h = (bounds[2] - bounds[0]) / 2;
@@ -477,7 +477,7 @@ void Screen::drawWidgets() {
 
             nvgFillColor(mNVGContext, Color(255, 255));
             nvgFontBlur(mNVGContext, 0.0f);
-            nvgTextBox(mNVGContext, pos.x() - h, pos.y(), tooltipWidth,
+            nvgTextBox(mNVGContext, pos.x - h, pos.y, tooltipWidth,
                        widget->tooltip().c_str(), nullptr);
         }
     }
@@ -516,7 +516,7 @@ bool Screen::cursorPosCallbackEvent(double x, double y) {
     Vector2i p((int) x, (int) y);
 
 #if defined(_WIN32) || defined(__linux__)
-    p = (p.cast<float>() / mPixelRatio).cast<int>();
+    p = ((Vector2f)p / mPixelRatio);
 #endif
 
     bool ret = false;
@@ -651,7 +651,7 @@ bool Screen::resizeCallbackEvent(int, int) {
     glfwGetWindowSize(mGLFWWindow, &size[0], &size[1]);
 
 #if defined(_WIN32) || defined(__linux__)
-    size = (size.cast<float>() / mPixelRatio).cast<int>();
+    size = ((Vector2f)size / mPixelRatio);
 #endif
 
     if (fbSize == Vector2i(0, 0) || size == Vector2i(0, 0))
@@ -699,7 +699,7 @@ void Screen::disposeWindow(Window *window) {
 }
 
 void Screen::centerWindow(Window *window) {
-    if (window->size() == Vector2i::Zero()) {
+    if (window->size() == Vector2i(0)) {
         window->setSize(window->preferredSize(mNVGContext));
         window->performLayout(mNVGContext);
     }

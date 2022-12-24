@@ -67,7 +67,7 @@ namespace {
 }
 
 ImageView::ImageView(Widget* parent, GLuint imageID)
-    : Widget(parent), mImageID(imageID), mScale(1.0f), mOffset(Vector2f::Zero()),
+    : Widget(parent), mImageID(imageID), mScale(1.0f), mOffset(Vector2f(0)),
     mFixedScale(false), mFixedOffset(false), mPixelInfoCallback(nullptr) {
     updateImageParameters();
     mShader.init("ImageViewShader", defaultImageViewVertexShader,
@@ -105,7 +105,7 @@ Vector2f ImageView::imageCoordinateAt(const Vector2f& position) const {
 
 Vector2f ImageView::clampedImageCoordinateAt(const Vector2f& position) const {
     auto imageCoordinate = imageCoordinateAt(position);
-    return imageCoordinate.cwiseMax(Vector2f::Zero()).cwiseMin(imageSizeF());
+    return cwiseMin(cwiseMax(imageCoordinate, Vector2f(0)), imageSizeF());
 }
 
 Vector2f ImageView::positionForCoordinate(const Vector2f& imageCoordinate) const {
@@ -118,21 +118,21 @@ void ImageView::setImageCoordinateAt(const Vector2f& position, const Vector2f& i
     mOffset = position - (imageCoordinate * mScale);
 
     // Clamp offset so that the image remains near the screen.
-    mOffset = mOffset.cwiseMin(sizeF()).cwiseMax(-scaledImageSizeF());
+    mOffset = cwiseMax(cwiseMin(mOffset, sizeF()), -scaledImageSizeF());
 }
 
 void ImageView::center() {
-    mOffset = (sizeF() - scaledImageSizeF()) / 2;
+    mOffset = (sizeF() - scaledImageSizeF()) / 2.0f;
 }
 
 void ImageView::fit() {
     // Calculate the appropriate scaling factor.
-    mScale = (sizeF().cwiseQuotient(imageSizeF())).minCoeff();
+    mScale = minCoeff((cwiseQuotient(sizeF(), imageSizeF())));
     center();
 }
 
 void ImageView::setScaleCentered(float scale) {
-    auto centerPosition = sizeF() / 2;
+    auto centerPosition = sizeF() / 2.0f;
     auto p = imageCoordinateAt(centerPosition);
     mScale = scale;
     setImageCoordinateAt(centerPosition, p);
@@ -144,14 +144,14 @@ void ImageView::moveOffset(const Vector2f& delta) {
 
     // Prevent the image from going out of bounds.
     auto scaledSize = scaledImageSizeF();
-    if (mOffset.x() + scaledSize.x() < 0)
-        mOffset.x() = -scaledSize.x();
-    if (mOffset.x() > sizeF().x())
-        mOffset.x() = sizeF().x();
-    if (mOffset.y() + scaledSize.y() < 0)
-        mOffset.y() = -scaledSize.y();
-    if (mOffset.y() > sizeF().y())
-        mOffset.y() = sizeF().y();
+    if (mOffset.x + scaledSize.x < 0)
+        mOffset.x = -scaledSize.x;
+    if (mOffset.x > sizeF().x)
+        mOffset.x = sizeF().x;
+    if (mOffset.y + scaledSize.y < 0)
+        mOffset.y = -scaledSize.y;
+    if (mOffset.y > sizeF().y)
+        mOffset.y = sizeF().y;
 }
 
 void ImageView::zoom(int amount, const Vector2f& focusPosition) {
@@ -163,7 +163,7 @@ void ImageView::zoom(int amount, const Vector2f& focusPosition) {
 
 bool ImageView::mouseDragEvent(const Vector2i& p, const Vector2i& rel, int button, int /*modifiers*/) {
     if ((button & (1 << GLFW_MOUSE_BUTTON_LEFT)) != 0 && !mFixedOffset) {
-        setImageCoordinateAt((p + rel).cast<float>(), imageCoordinateAt(p.cast<float>()));
+        setImageCoordinateAt((p + rel), imageCoordinateAt(p));
         return true;
     }
     return false;
@@ -184,10 +184,10 @@ bool ImageView::helpersVisible() const {
 bool ImageView::scrollEvent(const Vector2i& p, const Vector2f& rel) {
     if (mFixedScale)
         return false;
-    float v = rel.y();
+    float v = rel.y;
     if (std::abs(v) < 1)
         v = std::copysign(1.f, v);
-    zoom(v, (p - position()).cast<float>());
+    zoom(v, (p - position()));
     return true;
 }
 
@@ -239,13 +239,13 @@ bool ImageView::keyboardCharacterEvent(unsigned int codepoint) {
     switch (codepoint) {
     case '-':
         if (!mFixedScale) {
-            zoom(-1, sizeF() / 2);
+            zoom(-1, sizeF() / 2.0f);
             return true;
         }
         break;
     case '+':
         if (!mFixedScale) {
-            zoom(1, sizeF() / 2);
+            zoom(1, sizeF() / 2.0f);
             return true;
         }
         break;
@@ -293,16 +293,16 @@ void ImageView::draw(NVGcontext* ctx) {
     // properly displayed inside the widget.
     const Screen* screen = dynamic_cast<const Screen*>(this->window()->parent());
     assert(screen);
-    Vector2f screenSize = screen->size().cast<float>();
-    Vector2f scaleFactor = mScale * imageSizeF().cwiseQuotient(screenSize);
-    Vector2f positionInScreen = absolutePosition().cast<float>();
+    Vector2f screenSize = screen->size();
+    Vector2f scaleFactor = mScale * (Vector2f)(cwiseQuotient(imageSizeF(), screenSize));
+    Vector2f positionInScreen = absolutePosition();
     Vector2f positionAfterOffset = positionInScreen + mOffset;
-    Vector2f imagePosition = positionAfterOffset.cwiseQuotient(screenSize);
+    Vector2f imagePosition = cwiseQuotient(positionAfterOffset, screenSize);
     glEnable(GL_SCISSOR_TEST);
     float r = screen->pixelRatio();
-    glScissor(positionInScreen.x() * r,
-              (screenSize.y() - positionInScreen.y() - size().y()) * r,
-              size().x() * r, size().y() * r);
+    glScissor(positionInScreen.x * r,
+              (screenSize.y - positionInScreen.y - size().y) * r,
+              size().x * r, size().y * r);
     mShader.bind();
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, mImageID);
@@ -330,14 +330,14 @@ void ImageView::updateImageParameters() {
 void ImageView::drawWidgetBorder(NVGcontext* ctx) const {
     nvgBeginPath(ctx);
     nvgStrokeWidth(ctx, 1);
-    nvgRoundedRect(ctx, mPos.x() + 0.5f, mPos.y() + 0.5f, mSize.x() - 1,
-                   mSize.y() - 1, 0);
+    nvgRoundedRect(ctx, mPos.x + 0.5f, mPos.y + 0.5f, mSize.x - 1,
+                   mSize.y - 1, 0);
     nvgStrokeColor(ctx, mTheme->mWindowPopup);
     nvgStroke(ctx);
 
     nvgBeginPath(ctx);
-    nvgRoundedRect(ctx, mPos.x() + 0.5f, mPos.y() + 0.5f, mSize.x() - 1,
-                   mSize.y() - 1, mTheme->mButtonCornerRadius);
+    nvgRoundedRect(ctx, mPos.x + 0.5f, mPos.y + 0.5f, mSize.x - 1,
+                   mSize.y - 1, mTheme->mButtonCornerRadius);
     nvgStrokeColor(ctx, mTheme->mBorderDark);
     nvgStroke(ctx);
 }
@@ -345,12 +345,12 @@ void ImageView::drawWidgetBorder(NVGcontext* ctx) const {
 void ImageView::drawImageBorder(NVGcontext* ctx) const {
     nvgSave(ctx);
     nvgBeginPath(ctx);
-    nvgScissor(ctx, mPos.x(), mPos.y(), mSize.x(), mSize.y());
+    nvgScissor(ctx, mPos.x, mPos.y, mSize.x, mSize.y);
     nvgStrokeWidth(ctx, 1.0f);
-    Vector2i borderPosition = mPos + mOffset.cast<int>();
-    Vector2i borderSize = scaledImageSizeF().cast<int>();
-    nvgRect(ctx, borderPosition.x() - 0.5f, borderPosition.y() - 0.5f,
-            borderSize.x() + 1, borderSize.y() + 1);
+    Vector2i borderPosition = mPos + (Vector2i)mOffset;
+    Vector2i borderSize = scaledImageSizeF();
+    nvgRect(ctx, borderPosition.x - 0.5f, borderPosition.y - 0.5f,
+            borderSize.x + 1, borderSize.y + 1);
     nvgStrokeColor(ctx, Color(1.0f, 1.0f, 1.0f, 1.0f));
     nvgStroke(ctx);
     nvgResetScissor(ctx);
@@ -360,7 +360,7 @@ void ImageView::drawImageBorder(NVGcontext* ctx) const {
 void ImageView::drawHelpers(NVGcontext* ctx) const {
     // We need to apply mPos after the transformation to account for the position of the widget
     // relative to the parent.
-    Vector2f upperLeftCorner = positionForCoordinate(Vector2f::Zero()) + positionF();
+    Vector2f upperLeftCorner = positionForCoordinate(Vector2f(0)) + positionF();
     Vector2f lowerRightCorner = positionForCoordinate(imageSizeF()) + positionF();
     if (gridVisible())
         drawPixelGrid(ctx, upperLeftCorner, lowerRightCorner, mScale);
@@ -373,18 +373,18 @@ void ImageView::drawPixelGrid(NVGcontext* ctx, const Vector2f& upperLeftCorner,
     nvgBeginPath(ctx);
 
     // Draw the vertical grid lines
-    float currentX = upperLeftCorner.x();
-    while (currentX <= lowerRightCorner.x()) {
-        nvgMoveTo(ctx, std::round(currentX), std::round(upperLeftCorner.y()));
-        nvgLineTo(ctx, std::round(currentX), std::round(lowerRightCorner.y()));
+    float currentX = upperLeftCorner.x;
+    while (currentX <= lowerRightCorner.x) {
+        nvgMoveTo(ctx, std::round(currentX), std::round(upperLeftCorner.y));
+        nvgLineTo(ctx, std::round(currentX), std::round(lowerRightCorner.y));
         currentX += stride;
     }
 
     // Draw the horizontal grid lines
-    float currentY = upperLeftCorner.y();
-    while (currentY <= lowerRightCorner.y()) {
-        nvgMoveTo(ctx, std::round(upperLeftCorner.x()), std::round(currentY));
-        nvgLineTo(ctx, std::round(lowerRightCorner.x()), std::round(currentY));
+    float currentY = upperLeftCorner.y;
+    while (currentY <= lowerRightCorner.y) {
+        nvgMoveTo(ctx, std::round(upperLeftCorner.x), std::round(currentY));
+        nvgLineTo(ctx, std::round(lowerRightCorner.x), std::round(currentY));
         currentY += stride;
     }
 
@@ -395,20 +395,24 @@ void ImageView::drawPixelGrid(NVGcontext* ctx, const Vector2f& upperLeftCorner,
 
 void ImageView::drawPixelInfo(NVGcontext* ctx, float stride) const {
     // Extract the image coordinates at the two corners of the widget.
-    Vector2i topLeft = clampedImageCoordinateAt(Vector2f::Zero())
-                           .unaryExpr([](float x) { return std::floor(x); })
-                           .cast<int>();
+    Vector2i topLeft = clampedImageCoordinateAt(Vector2f(0));
+                           //.unaryExpr([](float x) { return std::floor(x); })
+                           //;
+    topLeft.x = std::floor(topLeft.x);
+    topLeft.y = std::floor(topLeft.y);
 
-    Vector2i bottomRight = clampedImageCoordinateAt(sizeF())
-                               .unaryExpr([](float x) { return std::ceil(x); })
-                               .cast<int>();
+    Vector2i bottomRight = clampedImageCoordinateAt(sizeF());
+                               //.unaryExpr([](float x) { return std::ceil(x); })
+                               //;
+    bottomRight.x = std::floor(bottomRight.x);
+    bottomRight.y = std::floor(bottomRight.y);
 
     // Extract the positions for where to draw the text.
     Vector2f currentCellPosition =
-        (positionF() + positionForCoordinate(topLeft.cast<float>()));
+        (positionF() + positionForCoordinate(topLeft));
 
-    float xInitialPosition = currentCellPosition.x();
-    int xInitialIndex = topLeft.x();
+    float xInitialPosition = currentCellPosition.x;
+    int xInitialIndex = topLeft.x;
 
     // Properly scale the pixel information for the given stride.
     auto fontSize = stride * mFontScaleFactor;
@@ -418,16 +422,16 @@ void ImageView::drawPixelInfo(NVGcontext* ctx, float stride) const {
     nvgFontSize(ctx, fontSize);
     nvgTextAlign(ctx, NVG_ALIGN_CENTER | NVG_ALIGN_TOP);
     nvgFontFace(ctx, "sans");
-    while (topLeft.y() != bottomRight.y()) {
-        while (topLeft.x() != bottomRight.x()) {
+    while (topLeft.y != bottomRight.y) {
+        while (topLeft.x != bottomRight.x) {
             writePixelInfo(ctx, currentCellPosition, topLeft, stride, fontSize);
-            currentCellPosition.x() += stride;
-            ++topLeft.x();
+            currentCellPosition.x += stride;
+            ++topLeft.x;
         }
-        currentCellPosition.x() = xInitialPosition;
-        currentCellPosition.y() += stride;
-        ++topLeft.y();
-        topLeft.x() = xInitialIndex;
+        currentCellPosition.x = xInitialPosition;
+        currentCellPosition.y += stride;
+        ++topLeft.y;
+        topLeft.x = xInitialIndex;
     }
 }
 
@@ -443,7 +447,7 @@ void ImageView::writePixelInfo(NVGcontext* ctx, const Vector2f& cellPosition,
     nvgFillColor(ctx, pixelData.second);
     float yOffset = (stride - fontSize * pixelDataRows.size()) / 2;
     for (size_t i = 0; i != pixelDataRows.size(); ++i) {
-        nvgText(ctx, cellPosition.x() + stride / 2, cellPosition.y() + yOffset,
+        nvgText(ctx, cellPosition.x + stride / 2, cellPosition.y + yOffset,
                 pixelDataRows[i].data(), nullptr);
         yOffset += fontSize;
     }
