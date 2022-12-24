@@ -140,10 +140,57 @@ private:
     GLuint mTextureId;
 };
 
+// reference : https://doitnow-man.tistory.com/entry/%EC%9C%88%EB%8F%84%EC%9A%B0-window-%ED%94%84%EB%A1%9C%EA%B7%B8%EB%9E%98%EB%B0%8D-%ED%95%9C%EA%B8%80-%EC%B2%98%EB%A6%AC-c
+std::string MultiByteToUtf8(std::string multibyte_str)
+{
+    char* pszIn = new char[multibyte_str.length() + 1];
+    strncpy_s(pszIn, multibyte_str.length() + 1, multibyte_str.c_str(), multibyte_str.length());
+
+    std::string resultString;
+
+    int nLenOfUni = 0, nLenOfUTF = 0;
+    wchar_t* uni_wchar = NULL;
+    char* pszOut = NULL;
+
+    // 1. ANSI(multibyte) Length
+    if ((nLenOfUni = MultiByteToWideChar(CP_ACP, 0, pszIn, (int)strlen(pszIn), NULL, 0)) <= 0)
+        return "";
+
+    uni_wchar = new wchar_t[nLenOfUni + 1];
+    memset(uni_wchar, 0x00, sizeof(wchar_t) * (nLenOfUni + 1));
+
+    // 2. ANSI(multibyte) ---> unicode
+    nLenOfUni = MultiByteToWideChar(CP_ACP, 0, pszIn, (int)strlen(pszIn), uni_wchar, nLenOfUni);
+
+    // 3. utf8 Length
+    if ((nLenOfUTF = WideCharToMultiByte(CP_UTF8, 0, uni_wchar, nLenOfUni, NULL, 0, NULL, NULL)) <= 0)
+    {
+        delete[] uni_wchar;
+        return "";
+    }
+
+    pszOut = new char[nLenOfUTF + 1];
+    memset(pszOut, 0, sizeof(char) * (nLenOfUTF + 1));
+
+    // 4. unicode ---> utf8
+    nLenOfUTF = WideCharToMultiByte(CP_UTF8, 0, uni_wchar, nLenOfUni, pszOut, nLenOfUTF, NULL, NULL);
+    pszOut[nLenOfUTF] = 0;
+    resultString = pszOut;
+
+    delete[] uni_wchar;
+    delete[] pszOut;
+
+    return resultString;
+}
+
 class ExampleApplication : public nanogui::Screen {
 public:
     ExampleApplication() : nanogui::Screen(Eigen::Vector2i(1024, 768), "NanoGUI Test") {
         using namespace nanogui;
+
+        // Load font files, name it.
+        nvgCreateFont(mNVGContext, "NanumGothic", "../resources/nanum-gothic/NanumGothic.ttf");
+        nvgCreateFont(mNVGContext, "NanumGothic-bold", "../resources/nanum-gothic/NanumGothicBold.ttf");
 
         Window *window = new Window(this, "Button demo");
         window->setPosition(Vector2i(15, 15));
@@ -151,7 +198,7 @@ public:
 
         /* No need to store a pointer, the data structure will be automatically
            freed when the parent window is deleted */
-        new Label(window, "Push buttons", "sans-bold");
+        new Label(window, MultiByteToUtf8("ÇÑ±¹¾îñéÏÐåÞEnglish"), "NanumGothic-bold");
 
         Button *b = new Button(window, "Plain button");
         b->setCallback([] { cout << "pushed!" << endl; });
