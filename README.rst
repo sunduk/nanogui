@@ -1,3 +1,20 @@
+This repository is for improving NanoGUI and recording revisions.
+
+I'll write some important modifications to below wiki pages.
+
+(wiki : https://github.com/sunduk/nanogui/wiki)
+
+=================================================
+
+NanoGUI를 개선하고 수정사항을 기록하기 위한 저장소 이다.
+
+몇가지 중요한 수정사항들은 아래 위키에 기록해 놓을 것이다.
+
+(wiki : https://github.com/sunduk/nanogui/wiki)
+
+=================================================
+
+========================================================================================  
 NanoGUI
 ========================================================================================
 |docs| |travis| |appveyor|
